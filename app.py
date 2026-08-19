@@ -1,5 +1,5 @@
 import streamlit as st
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw
 import io
 from rembg import remove, new_session
 
@@ -55,22 +55,15 @@ if uploaded_file is not None:
             # 1. Crea lo sfondo con sfumatura naturale verticale
             background = create_natural_background((1200, 1200), bg_style)
             
-            # 2. Ombra delicata e centrata alla base del prodotto
-            shadow = Image.new("RGBA", (1200, 1200), (0, 0, 0, 0))
-            shadow_draw = ImageDraw.Draw(shadow)
-            shadow_draw.ellipse([350, 930, 850, 1120], fill=(0, 0, 0, 45))
-            shadow = shadow.filter(ImageFilter.GaussianBlur(30))
-            
-            # 3. Ridimensiona e posiziona perfettamente al centro
+            # 2. Ridimensiona e posiziona perfettamente al centro (senza ombra)
             output_image.thumbnail((900, 900), Image.Resampling.LANCZOS)
             paste_x = (1200 - output_image.width) // 2
             paste_y = (1200 - output_image.height) // 2
             
-            background.paste(shadow, (0, 0), shadow)
-            background.paste(output_image, (paste_x, paste_y - 30), output_image)
+            background.paste(output_image, (paste_x, paste_y), output_image)
             
             buffered = io.BytesIO()
             background.save(buffered, format="JPEG", quality=95)
             
-            st.image(background, caption="Risultato Centrato e Naturale", use_container_width=True)
+            st.image(background, caption="Risultato Pulito e Centrato", use_container_width=True)
             st.download_button("📥 Scarica Foto", buffered.getvalue(), "foto_vinted.jpg", "image/jpeg", use_container_width=True)
