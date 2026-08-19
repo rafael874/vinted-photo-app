@@ -1,6 +1,6 @@
 import io
 from PIL import Image
-from rembg import remove
+from rembg import new_session, remove
 import streamlit as st
 
 # Configurazione della pagina
@@ -37,9 +37,10 @@ if uploaded_file is not None:
 
   if st.button("Rimuovi Sfondo"):
     with st.spinner("Elaborazione in corso..."):
-      # Rimozione dello sfondo
+      # Usiamo il modello leggero u2netp per evitare il crash di memoria (schermata bianca)
       input_image = image.convert("RGBA")
-      output_image = remove(input_image)
+      session = new_session("u2netp")
+      output_image = remove(input_image, session=session)
 
       # Gestione dei vari sfondi
       if bg_choice == "Bianco Puro":
