@@ -1,10 +1,48 @@
-if st.button("Rimuovi Sfondo"):
-    with st.spinner("Elaborazione in corso... (potrebbe metterci qualche secondo la prima volta)"):
+import io
+from PIL import Image
+import streamlit as st
+
+# Configurazione della pagina
+st.set_page_config(
+    page_title="Vinted Studio Photo Editor", page_icon="📸", layout="centered"
+)
+
+# --- INTERFACCIA PRINCIPALE ---
+st.title("📸 Vinted Studio Photo Editor")
+st.write(
+    "Rimuovi lo sfondo e crea foto perfette per i tuoi annunci su Vinted in"
+    " pochi secondi."
+)
+
+uploaded_file = st.file_uploader(
+    "Scegli un'immagine", type=["jpg", "jpeg", "png"]
+)
+
+# SEZIONE SCELTA SFONDO
+bg_choice = st.selectbox(
+    "Seleziona il colore dello sfondo:",
+    [
+        "Trasparente (PNG)",
+        "Bianco Puro",
+        "Grigio Neutro",
+        "Beige / Carta da zucchero",
+    ],
+)
+
+if uploaded_file is not None:
+  # Mostra l'immagine originale
+  image = Image.open(uploaded_file)
+  st.image(image, caption="Foto Originale")
+
+  if st.button("Rimuovi Sfondo"):
+    with st.spinner(
+        "Elaborazione in corso... (la prima volta potrebbe metterci qualche"
+        " secondo)"
+    ):
       try:
         from rembg import new_session, remove
-        
+
         input_image = image.convert("RGBA")
-        # Inizializziamo la sessione con gestione errori
         session = new_session("u2netp")
         output_image = remove(input_image, session=session)
 
@@ -42,3 +80,20 @@ if st.button("Rimuovi Sfondo"):
         )
       except Exception as e:
         st.error(f"Errore durante l'elaborazione dell'immagine: {e}")
+
+# --- SEZIONE SUPPORTO ---
+st.markdown("---")
+st.subheader("☕ Ti è stato utile questo strumento?")
+st.write(
+    "Puoi offrire un caffè per sostenere i costi o contattarmi per"
+    " bug/suggerimenti!"
+)
+
+col1, col2 = st.columns(2)
+with col1:
+  st.link_button(
+      "☕ Offrimi un caffè (PayPal)",
+      "https://www.paypal.me/ContoAziendalePaypal",
+  )
+with col2:
+  st.link_button("✉️ Contattami", "mailto:tuaemail@example.com")
