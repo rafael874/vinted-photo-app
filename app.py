@@ -7,7 +7,7 @@ st.set_page_config(page_title="Studio Foto Vinted", page_icon="📸", layout="ce
 
 st.title("📸 Studio Foto per Vinted")
 
-bg_options = ["Studio Luminoso", "Grigio Neutro", "Nero Naturale"]
+bg_options = ["Bianco Professionale", "Grigio Neutro", "Nero Naturale"]
 
 @st.cache_resource
 def load_stable_model():
@@ -19,7 +19,7 @@ def create_natural_background(size, style):
     draw = ImageDraw.Draw(bg)
     
     # Tonalità morbide e opache (sfumatura verticale realistica)
-    if style == "Studio Luminoso":
+    if style == "Bianco Professionale":
         color_top = (248, 249, 250)
         color_bottom = (218, 222, 226)
     elif style == "Grigio Neutro":
@@ -55,7 +55,7 @@ if uploaded_file is not None:
             # 1. Crea lo sfondo con sfumatura naturale verticale
             background = create_natural_background((1200, 1200), bg_style)
             
-            # 2. Ridimensiona e posiziona perfettamente al centro (senza ombra)
+            # 2. Ridimensiona e posiziona perfettamente al centro
             output_image.thumbnail((900, 900), Image.Resampling.LANCZOS)
             paste_x = (1200 - output_image.width) // 2
             paste_y = (1200 - output_image.height) // 2
