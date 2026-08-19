@@ -34,8 +34,13 @@ def create_natural_background(size, style):
         draw.line([(0, y), (width, y)], fill=(r, g, b))
     return bg
 
-# Selettore file pulito
-uploaded_files = st.file_uploader("1. Seleziona fino a 5 foto:", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+# Selettore file ottimizzato per aprire la galleria del telefono
+uploaded_files = st.file_uploader(
+    "1. Seleziona fino a 5 foto dal tuo rullino:", 
+    type=["jpg", "jpeg", "png"], 
+    accept_multiple_files=True,
+    help="Tocca qui per aprire la galleria del telefono e scegliere le foto."
+)
 
 if uploaded_files:
     if len(uploaded_files) > 5:
