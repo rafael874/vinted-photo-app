@@ -36,7 +36,12 @@ with st.sidebar:
 
   bg_choice = st.selectbox(
       "Colore dello sfondo",
-      ["Trasparente (PNG)", "Bianco Puro", "Grigio Neutro", "Beige / Carta da zucchero"],
+      [
+          "Trasparente (PNG)",
+          "Bianco Puro",
+          "Grigio Neutro",
+          "Beige / Carta da zucchero",
+      ],
   )
 
 uploaded_file = st.file_uploader(
@@ -44,9 +49,9 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file is not None:
-  # Mostra l'immagine originale
+  # Mostra l'immagine originale (usiamo width='stretch' per evitare i vecchi warning)
   image = Image.open(uploaded_file)
-  st.image(image, caption="Foto Originale", use_container_width=True)
+  st.image(image, caption="Foto Originale", width="stretch")
 
   with st.spinner("Elaborazione e rimozione sfondo in corso..."):
     # Rimozione dello sfondo con rembg
@@ -85,7 +90,7 @@ if uploaded_file is not None:
     st.image(
         final_image,
         caption=f"Foto elaborata ({bg_choice})",
-        use_container_width=True,
+        width="stretch",
     )
 
     # Pulsante di Download
@@ -98,7 +103,7 @@ if uploaded_file is not None:
         data=byte_im,
         file_name=f"vinted_studio.{file_extension}",
         mime=mime_type,
-        use_container_width=True,
+        width="stretch",
     )
 
   # --- 3. SEZIONE SUPPORTO E CONTATTO (In evidenza) ---
@@ -113,12 +118,12 @@ if uploaded_file is not None:
   st.link_button(
       "☕ Offrimi un caffè (PayPal)",
       "https://www.paypal.me/ContoAziendalePaypal",
-      use_container_width=True,
+      width="stretch",
   )
 
-  # Pulsante di Contatto (es. Email o Telegram - sostituisci con il tuo contatto)
+  # Pulsante di Contatto (Modifica l'email o metti il tuo link Telegram)
   st.link_button(
       "✉️ Contattami / Segnala un bug",
-      "mailto:tuaemail@example.com",  # Oppure metti il link al tuo Telegram es: "https://t.me/tuonome"
-      use_container_width=True,
+      "mailto:tuaemail@example.com",
+      width="stretch",
   )
