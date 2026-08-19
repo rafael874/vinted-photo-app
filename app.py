@@ -10,9 +10,9 @@ st.title("📸 Studio Foto per Vinted")
 bg_options = ["Bianco", "Nero", "Grigio", "Trasparente"]
 
 @st.cache_resource
-def load_best_quality_model():
-    # Usiamo isnet-general-use: leggermente più lento ma con una precisione eccezionale sui bordi
-    return new_session("isnet-general-use")
+def load_stable_model():
+    # Usiamo u2net: stabile, non crasha e taglia molto bene se la foto è ottimizzata
+    return new_session("u2net")
 
 def create_background(size, style):
     if style == "Bianco": return Image.new("RGB", size, (255, 255, 255))
@@ -29,8 +29,12 @@ if uploaded_file is not None:
     bg_style = st.selectbox("2. Scegli lo sfondo:", bg_options)
     
     if st.button("✨ Elabora Foto", type="primary", use_container_width=True):
-        with st.spinner("Elaborazione di alta precisione in corso..."):
-            session = load_best_quality_model()
+        with st.spinner("Elaborazione in corso..."):
+            # RIDIMENSIONAMENTO DI SICUREZZA: se la foto è troppo grande, 
+            # la rimpiccioliamo leggermente per non far crashare la memoria di Streamlit
+            image.thumbnail((1500, 1500))
+            
+            session = load_stable_model()
             output_image = remove(image, session=session)
             
             if bg_style == "Trasparente":
