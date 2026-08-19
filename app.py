@@ -18,18 +18,16 @@ def create_natural_background(size, style):
     bg = Image.new("RGB", size)
     draw = ImageDraw.Draw(bg)
     
-    # Tonalità morbide e opache (sfumatura verticale realistica)
     if style == "Bianco Professionale":
         color_top = (248, 249, 250)
         color_bottom = (218, 222, 226)
     elif style == "Grigio Neutro":
         color_top = (210, 213, 218)
         color_bottom = (155, 159, 165)
-    else: # Nero Naturale (Antracite opaco)
+    else: 
         color_top = (70, 73, 80)
         color_bottom = (35, 38, 42)
 
-    # Sfumatura verticale riga per riga (stile parete di studio)
     for y in range(height):
         r = int(color_top[0] + (color_bottom[0] - color_top[0]) * (y / height))
         g = int(color_top[1] + (color_bottom[1] - color_top[1]) * (y / height))
@@ -52,18 +50,18 @@ if uploaded_file is not None:
             session = load_stable_model()
             output_image = remove(image, session=session)
             
-            # 1. Crea lo sfondo con sfumatura naturale verticale
             background = create_natural_background((1200, 1200), bg_style)
             
-            # 2. Ridimensiona e posiziona perfettamente al centro
-            output_image.thumbnail((900, 900), Image.Resampling.LANCZOS)
+            # 💡 USIAMO BICUBIC: Mantiene i dettagli della stoffa e i bordi molto più definiti e nitidi
+            output_image.thumbnail((950, 950), Image.Resampling.BICUBIC)
+            
             paste_x = (1200 - output_image.width) // 2
             paste_y = (1200 - output_image.height) // 2
             
             background.paste(output_image, (paste_x, paste_y), output_image)
             
             buffered = io.BytesIO()
-            background.save(buffered, format="JPEG", quality=95)
+            background.save(buffered, format="JPEG", quality=98) # Qualità al 98% per zero sgranature
             
-            st.image(background, caption="Risultato Pulito e Centrato", use_container_width=True)
+            st.image(background, caption="Risultato Nitido", use_container_width=True)
             st.download_button("📥 Scarica Foto", buffered.getvalue(), "foto_vinted.jpg", "image/jpeg", use_container_width=True)
