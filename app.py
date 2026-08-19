@@ -3,10 +3,11 @@ from PIL import Image, ImageDraw, ImageOps
 import io
 from rembg import remove, new_session
 
+# Configurazione della pagina ottimizzata per dispositivi mobili
 st.set_page_config(page_title="Studio Foto Vinted", page_icon="📸", layout="centered")
 
 st.title("📸 Studio Foto per Vinted")
-st.markdown("Migliora le tue foto in pochi secondi.")
+st.markdown("Rendi i tuoi capi professionali in un click. Carica le tue foto qui sotto.")
 
 bg_options = ["Bianco Professionale", "Grigio Neutro", "Nero Naturale"]
 
@@ -33,6 +34,7 @@ def create_natural_background(size, style):
         draw.line([(0, y), (width, y)], fill=(r, g, b))
     return bg
 
+# Selettore file pulito
 uploaded_files = st.file_uploader("1. Seleziona fino a 5 foto:", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
 if uploaded_files:
@@ -48,12 +50,15 @@ if uploaded_files:
         
         for i, uploaded_file in enumerate(uploaded_files):
             try:
+                # Caricamento e correzione automatica rotazione telefono
                 image = Image.open(uploaded_file)
                 image = ImageOps.exif_transpose(image)
                 image.thumbnail((1500, 1500))
                 
+                # Rimozione sfondo nitida
                 output_image = remove(image, session=session)
                 
+                # Creazione sfondo e posizionamento centrato
                 background = create_natural_background((1200, 1200), bg_style)
                 output_image.thumbnail((950, 950), Image.Resampling.BICUBIC)
                 
@@ -61,14 +66,27 @@ if uploaded_files:
                 paste_y = (1200 - output_image.height) // 2
                 background.paste(output_image, (paste_x, paste_y), output_image)
                 
+                # Salvataggio in alta qualità
                 buffered = io.BytesIO()
                 background.save(buffered, format="JPEG", quality=95)
                 
-                st.image(background, caption=f"Foto {i+1} pronta", use_container_width=True)
-                st.download_button(f"📥 Scarica Foto {i+1}", buffered.getvalue(), f"vinted_{i+1}.jpg", "image/jpeg", key=f"d_{i}", use_container_width=True)
+                # Anteprima e download puliti
+                st.markdown(f"**Foto {i+1} completata**")
+                st.image(background, use_container_width=True)
+                st.download_button(
+                    f"📥 Scarica Foto {i+1}", 
+                    buffered.getvalue(), 
+                    f"vinted_{i+1}.jpg", 
+                    "image/jpeg", 
+                    key=f"d_{i}", 
+                    use_container_width=True
+                )
+                st.markdown("---")
                 
             except Exception as e:
-                st.error(f"Errore nella foto {i+1}: {e}")
+                st.error(f"Errore durante l'elaborazione della foto {i+1}: {e}")
             
+            # Aggiornamento barra di avanzamento
             progress_bar.progress((i + 1) / len(uploaded_files))
-        st.success("Tutte le foto sono pronte!")
+            
+        st.success("🎉 Tutte le foto sono pronte per essere caricate su Vinted!")
