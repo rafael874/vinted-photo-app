@@ -7,7 +7,7 @@ from rembg import remove, new_session
 st.set_page_config(page_title="Studio Foto Vinted", page_icon="📸", layout="centered")
 
 st.title("📸 Studio Foto per Vinted")
-st.markdown("Rendi i tuoi capi professionali in un click. Carica le tue foto qui sotto.")
+st.markdown("Rendi i tuoi capi professionali in un click.")
 
 bg_options = ["Bianco Professionale", "Grigio Neutro", "Nero Naturale"]
 
@@ -34,20 +34,36 @@ def create_natural_background(size, style):
         draw.line([(0, y), (width, y)], fill=(r, g, b))
     return bg
 
-# Selettore file ottimizzato per aprire la galleria del telefono
-uploaded_files = st.file_uploader(
-    "1. Seleziona fino a 5 foto dal tuo rullino:", 
-    type=["jpg", "jpeg", "png"], 
-    accept_multiple_files=True,
-    help="Tocca qui per aprire la galleria del telefono e scegliere le foto."
+# Scelta della modalità di caricamento per comodità da mobile
+modalita = st.radio(
+    "Come vuoi caricare le foto?", 
+    ["📁 Scegli dalla Galleria (Consigliato)", "📸 Scatta foto ora"],
+    horizontal=True
 )
+
+uploaded_files = []
+
+if "Galleria" in modalita:
+    # Questo forza l'apertura dei file salvati / galleria
+    files = st.file_uploader(
+        "Seleziona fino a 5 foto:", 
+        type=["jpg", "jpeg", "png"], 
+        accept_multiple_files=True
+    )
+    if files:
+        uploaded_files = files
+else:
+    # Scatto rapido con la camera integrata
+    camera_file = st.camera_input("Scatta una foto al capo")
+    if camera_file:
+        uploaded_files = [camera_file]
 
 if uploaded_files:
     if len(uploaded_files) > 5:
         st.warning("⚠️ Puoi caricare al massimo 5 foto alla volta.")
         uploaded_files = uploaded_files[:5]
         
-    bg_style = st.selectbox("2. Scegli lo sfondo:", bg_options)
+    bg_style = st.selectbox("Scegli lo sfondo professionale:", bg_options)
     
     if st.button("✨ Avvia Elaborazione", type="primary", use_container_width=True):
         progress_bar = st.progress(0)
@@ -55,7 +71,7 @@ if uploaded_files:
         
         for i, uploaded_file in enumerate(uploaded_files):
             try:
-                # Caricamento e correzione automatica rotazione telefono
+                # Caricamento e correzione automatica rotazione
                 image = Image.open(uploaded_file)
                 image = ImageOps.exif_transpose(image)
                 image.thumbnail((1500, 1500))
