@@ -1,3 +1,7 @@
+import os
+# Impostiamo una variabile d'ambiente per forzare rembg a usare una cartella specifica
+os.environ["REMBG_MODEL"] = "u2netp"
+
 import streamlit as st
 from PIL import Image
 import io
@@ -8,7 +12,6 @@ st.set_page_config(page_title="Studio Foto Vinted", page_icon="📸", layout="ce
 st.title("📸 Studio Foto per Vinted & Co.")
 st.write("Rimuovi lo sfondo e ottimizza le tue foto prodotto in un secondo (standard 1200x1200px con sfondo bianco).")
 
-# Forziamo l'uso del modello u2netp (pesa solo pochi megabyte)
 @st.cache_resource
 def load_light_model():
     return new_session("u2netp")
@@ -22,11 +25,10 @@ if uploaded_file is not None:
     st.image(image, width='content')
     
     if st.button("Elabora e Ottimizza Foto", type="primary"):
-        with st.spinner("Elaborazione in corso con modello leggero..."):
+        with st.spinner("Elaborazione in corso..."):
             if image.mode in ("RGBA", "P"):
                 image = image.convert("RGB")
                 
-            # Chiamata sicura con sessione leggera
             session = load_light_model()
             output_image = remove(image, session=session)
             
