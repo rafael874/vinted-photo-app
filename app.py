@@ -1,70 +1,61 @@
-import io
-from PIL import Image
-from rembg import remove
 import streamlit as st
+from PIL import Image
+import io
+from rembg import remove, new_session
 
-# Configurazione della pagina
-st.set_page_config(
-    page_title="Studio Foto Vinted", page_icon="📸", layout="centered"
-)
+st.set_page_config(page_title="Studio Foto Vinted", page_icon="📸", layout="centered")
 
 st.title("📸 Studio Foto per Vinted & Co.")
-st.write(
-    "Carica la foto del tuo capo: l'app rimuoverà lo sfondo e la centrerà in un formato quadrato perfetto (1200x1200px) con sfondo bianco."
-)
+st.write("Rimuovi lo sfondo e ottimizza le tue foto prodotto in un secondo (standard 1200x1200px con sfondo bianco).")
 
-# Upload dell'immagine
-uploaded_file = st.file_uploader(
-    "Scegli un'immagine...", type=["jpg", "jpeg", "png"]
-)
+# Usiamo una sessione leggera per evitare sovraccarichi di memoria sul server gratuito
+@st.cache_resource
+def get_rembg_session():
+    # Usiamo 'u2netp', una versione ultraleggera e veloce ideale per i piani gratuiti
+    return new_session("u2netp")
+
+uploaded_file = st.file_uploader("Carica la foto del tuo prodotto", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # Mostra l'immagine originale
     image = Image.open(uploaded_file)
-    st.image(image, caption="Foto Originale", use_container_width=True)
-
+    
+    st.subheader("Foto Originale")
+    st.image(image, width='content')
+    
     if st.button("Elabora e Ottimizza Foto", type="primary"):
-        with st.spinner("Rimozione dello sfondo e ottimizzazione in corso..."):
-            # Conversione in RGBA per gestire la trasparenza
-            if image.mode in ("RGBA", "LA") or (
-                image.mode == "P" and "transparency" in image.info
-            ):
-                image = image.convert("RGBA")
-            else:
-                image = image.convert("RGB").convert("RGBA")
-
-            # 1. Rimuovi lo sfondo usando rembg
-            output_image = remove(image)
-
-            # 2. Crea uno sfondo bianco quadrato 1200x1200px
+        with st.spinner("Elaborazione in corso..."):
+            # Conversione in RGB se necessario
+            if image.mode in ("RGBA", "P"):
+                image = image.convert("RGB")
+                
+            # Rimozione sfondo con la sessione leggera
+            session = get_rembg_session()
+            output_image = remove(image, session=session)
+            
+            # Creazione sfondo bianco 1200x1200px
             target_size = (1200, 1200)
-            background = Image.new("RGBA", target_size, (255, 255, 255, 255))
-
-            # Ridimensiona l'immagine mantenendo le proporzioni
-            output_image.thumbnail((1050, 1050), Image.Resampling.LANCZOS)
-
-            # Calcola la posizione per centrarla
-            offset_x = (target_size[0] - output_image.width) // 2
-            offset_y = (target_size[1] - output_image.height) // 2
-
-            # Incolla il capo sullo sfondo bianco
-            background.paste(output_image, (offset_x, offset_y), output_image)
-
-            # Converti in RGB per il salvataggio in JPG
-            final_image = background.convert("RGB")
-
-            # Salva l'immagine in un buffer
-            buf = io.BytesIO()
-            final_image.save(buf, format="JPEG", quality=95)
-            byte_im = buf.getvalue()
-
-        st.success("Fatto! La tua foto è pronta.")
-        st.image(final_image, caption="Foto Ottimizzata e Centrata", use_container_width=True)
-
-        # Pulsante per il download
-        st.download_button(
-            label="📥 Scarica Foto per Vinted",
-            data=byte_im,
-            file_name="foto_vinted_ottimizzata.jpg",
-            mime="image/jpeg",
-        )
+            background = Image.new("RGB", target_size, (255, 255, 255))
+            
+            # Ridimensionamento proporzionale del prodotto per farlo entrare nel quadrato
+            output_image.thumbnail((1000, 1000), Image.Resampling.LANCZOS)
+            
+            # Centratura dell'immagine sullo sfondo bianco
+            paste_x = (target_size[0] - output_image.width) // 2
+            paste_y = (target_size[1] - output_image.height) // 2
+            
+            background.paste(output_image, (paste_x, paste_y), output_image)
+            
+            # Salvataggio in formato bytes per il download
+            buffered = io.BytesIO()
+            background.save(buffered, format="JPEG", quality=95)
+            img_bytes = buffered.getvalue()
+            
+            st.subheader("Risultato Pronto per la Vendita!")
+            st.image(background, width='content')
+            
+            st.download_button(
+                label="Scarica Foto Ottimizzata (1200x1200)",
+                data=img_bytes,
+                file_name="vinted_pro_foto.jpg",
+                mime="image/jpeg"
+            )
