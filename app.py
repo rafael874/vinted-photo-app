@@ -7,12 +7,12 @@ st.set_page_config(page_title="Studio Foto Vinted", page_icon="📸", layout="ce
 
 st.title("📸 Studio Foto per Vinted")
 
-# Solo sfondi essenziali e puliti
 bg_options = ["Bianco", "Nero", "Grigio", "Trasparente"]
 
 @st.cache_resource
-def load_better_model():
-    return new_session("u2net")
+def load_best_quality_model():
+    # Usiamo isnet-general-use: leggermente più lento ma con una precisione eccezionale sui bordi
+    return new_session("isnet-general-use")
 
 def create_background(size, style):
     if style == "Bianco": return Image.new("RGB", size, (255, 255, 255))
@@ -29,8 +29,8 @@ if uploaded_file is not None:
     bg_style = st.selectbox("2. Scegli lo sfondo:", bg_options)
     
     if st.button("✨ Elabora Foto", type="primary", use_container_width=True):
-        with st.spinner("Elaborazione in corso..."):
-            session = load_better_model()
+        with st.spinner("Elaborazione di alta precisione in corso..."):
+            session = load_best_quality_model()
             output_image = remove(image, session=session)
             
             if bg_style == "Trasparente":
