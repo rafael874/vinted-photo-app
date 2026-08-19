@@ -13,25 +13,29 @@ bg_options = ["Studio Luminoso", "Grigio Neutro", "Nero Naturale"]
 def load_stable_model():
     return new_session("u2net")
 
-def create_depth_background(size, style):
+def create_natural_background(size, style):
     width, height = size
-    bg = Image.new("RGB", size, (255, 255, 255))
+    bg = Image.new("RGB", size)
     draw = ImageDraw.Draw(bg)
     
-    # Tonalità molto più tenui e naturali, meno "sparate"
+    # Tonalità morbide e opache (sfumatura verticale realistica)
     if style == "Studio Luminoso":
-        c1, c2 = (245, 246, 248), (215, 218, 222)  # Bianco panna / grigio carta da zucchero leggerissimo
+        color_top = (248, 249, 250)
+        color_bottom = (218, 222, 226)
     elif style == "Grigio Neutro":
-        c1, c2 = (205, 208, 212), (160, 164, 170)  # Grigio caldo e morbido
-    else: # Nero Naturale (grigio scuro antracite, non nero buio)
-        c1, c2 = (75, 78, 85), (45, 48, 52)
+        color_top = (210, 213, 218)
+        color_bottom = (155, 159, 165)
+    else: # Nero Naturale (Antracite opaco)
+        color_top = (70, 73, 80)
+        color_bottom = (35, 38, 42)
 
-    for i in range(width // 2):
-        ratio = i / (width // 2)
-        r = int(c1[0] + (c2[0] - c1[0]) * ratio)
-        g = int(c1[1] + (c2[1] - c1[1]) * ratio)
-        b = int(c1[2] + (c2[2] - c1[2]) * ratio)
-        draw.ellipse([i, i, width-i, height-i], outline=(r, g, b))
+    # Sfumatura verticale riga per riga (stile parete di studio)
+    for y in range(height):
+        r = int(color_top[0] + (color_bottom[0] - color_top[0]) * (y / height))
+        g = int(color_top[1] + (color_bottom[1] - color_top[1]) * (y / height))
+        b = int(color_top[2] + (color_bottom[2] - color_top[2]) * (y / height))
+        draw.line([(0, y), (width, y)], fill=(r, g, b))
+        
     return bg
 
 uploaded_file = st.file_uploader("1. Carica foto", type=["jpg", "jpeg", "png"])
@@ -48,22 +52,25 @@ if uploaded_file is not None:
             session = load_stable_model()
             output_image = remove(image, session=session)
             
-            background = create_depth_background((1200, 1200), bg_style)
+            # 1. Crea lo sfondo con sfumatura naturale verticale
+            background = create_natural_background((1200, 1200), bg_style)
             
-            # Ombra più leggera e naturale sotto il vestito
+            # 2. Ombra delicata e centrata alla base del prodotto
             shadow = Image.new("RGBA", (1200, 1200), (0, 0, 0, 0))
             shadow_draw = ImageDraw.Draw(shadow)
-            shadow_draw.ellipse([350, 920, 850, 1130], fill=(0, 0, 0, 40)) # Ombra più trasparente
-            shadow = shadow.filter(ImageFilter.GaussianBlur(35))
+            shadow_draw.ellipse([350, 930, 850, 1120], fill=(0, 0, 0, 45))
+            shadow = shadow.filter(ImageFilter.GaussianBlur(30))
             
+            # 3. Ridimensiona e posiziona perfettamente al centro
             output_image.thumbnail((900, 900), Image.Resampling.LANCZOS)
-            paste_x, paste_y = (1200 - output_image.width) // 2, (1200 - output_image.height) // 2
+            paste_x = (1200 - output_image.width) // 2
+            paste_y = (1200 - output_image.height) // 2
             
             background.paste(shadow, (0, 0), shadow)
-            background.paste(output_image, (paste_x, paste_y - 40), output_image)
+            background.paste(output_image, (paste_x, paste_y - 30), output_image)
             
             buffered = io.BytesIO()
             background.save(buffered, format="JPEG", quality=95)
             
-            st.image(background, caption="Risultato Naturale", use_container_width=True)
+            st.image(background, caption="Risultato Centrato e Naturale", use_container_width=True)
             st.download_button("📥 Scarica Foto", buffered.getvalue(), "foto_vinted.jpg", "image/jpeg", use_container_width=True)
