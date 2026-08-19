@@ -1,73 +1,65 @@
-import os
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageDraw
 import io
 from rembg import remove, new_session
 
 st.set_page_config(page_title="Studio Foto Vinted", page_icon="📸", layout="centered")
 
 st.title("📸 Studio Foto per Vinted")
-st.write("Carica la foto, scegli lo sfondo e scaricala pronta per la vendita!")
 
-# Mapping colori
-color_map = {
-    "Bianco": (255, 255, 255),
-    "Nero": (0, 0, 0),
-    "Grigio Chiaro": (220, 220, 220),
-    "Grigio Scuro": (100, 100, 100),
-    "Trasparente": None
-}
+# Definizione colori e stili
+bg_options = ["Bianco", "Nero", "Grigio", "Campo Erba", "Mattone", "Trasparente"]
 
 @st.cache_resource
 def load_better_model():
     return new_session("u2net")
 
-# 1. Prima cosa: Caricamento foto in evidenza
-uploaded_file = st.file_uploader("1. Carica o scatta la foto", type=["jpg", "jpeg", "png"])
+def create_background(size, style):
+    if style == "Bianco": return Image.new("RGB", size, (255, 255, 255))
+    if style == "Nero": return Image.new("RGB", size, (0, 0, 0))
+    if style == "Grigio": return Image.new("RGB", size, (128, 128, 128))
+    
+    bg = Image.new("RGB", size, (255, 255, 255))
+    draw = ImageDraw.Draw(bg)
+    
+    if style == "Campo Erba":
+        bg = Image.new("RGB", size, (34, 139, 34)) # Verde erba
+        for i in range(0, size[0], 100): # Disegna righe campo
+            draw.line([(i, 0), (i, size[1])], fill=(0, 100, 0), width=5)
+            
+    if style == "Mattone":
+        bg = Image.new("RGB", size, (178, 34, 34)) # Colore mattone
+        for i in range(0, size[1], 50): # Disegna righe mattoni
+            draw.line([(0, i), (size[0], i)], fill=(139, 0, 0), width=5)
+            
+    return bg
+
+uploaded_file = st.file_uploader("1. Carica foto", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
-    st.image(image, caption="Foto Originale", width='stretch')
+    st.image(image, caption="Foto Originale", use_container_width=True)
     
-    # 2. Seconda cosa: Scelta dello sfondo subito sotto
-    st.markdown("---")
-    bg_color_name = st.selectbox("2. Scegli il colore dello sfondo:", list(color_map.keys()))
-    bg_color = color_map[bg_color_name]
+    bg_style = st.selectbox("2. Scegli lo sfondo:", bg_options)
     
-    # 3. Terza cosa: Pulsante grande centrale
-    st.markdown("---")
-    if st.button("✨ Elabora e Ottimizza", type="primary", width='stretch'):
-        with st.spinner("Elaborazione in corso..."):
+    if st.button("✨ Elabora Foto", type="primary", use_container_width=True):
+        with st.spinner("Elaborazione..."):
             session = load_better_model()
             output_image = remove(image, session=session)
             
-            target_size = (1200, 1200)
-            
-            if bg_color is None:
+            if bg_style == "Trasparente":
                 final_image = output_image.resize((1000, 1000))
-                file_ext = "PNG"
-                mime_type = "image/png"
+                file_ext, mime = "PNG", "image/png"
             else:
-                background = Image.new("RGB", target_size, bg_color)
+                background = create_background((1200, 1200), bg_style)
                 output_image.thumbnail((1000, 1000), Image.Resampling.LANCZOS)
-                paste_x = (target_size[0] - output_image.width) // 2
-                paste_y = (target_size[1] - output_image.height) // 2
+                paste_x = (1200 - output_image.width) // 2
+                paste_y = (1200 - output_image.height) // 2
                 background.paste(output_image, (paste_x, paste_y), output_image)
                 final_image = background
-                file_ext = "JPEG"
-                mime_type = "image/jpeg"
+                file_ext, mime = "JPEG", "image/jpeg"
             
             buffered = io.BytesIO()
             final_image.save(buffered, format=file_ext, quality=95)
-            img_bytes = buffered.getvalue()
-            
-            st.success("Fatto!")
-            st.image(final_image, caption="Risultato Finale", width='stretch')
-            
-            st.download_button(
-                label=f"📥 Scarica Foto ({bg_color_name})",
-                data=img_bytes,
-                file_name=f"vinted_foto.{file_ext.lower()}",
-                mime=mime_type,
-                width='stretch'
-            )
+            st.image(final_image, caption="Risultato", use_container_width=True)
+            st.download_button("📥 Scarica Foto", buffered.getvalue(), f"foto.{file_ext.lower()}", mime, use_container_width=True)
