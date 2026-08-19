@@ -2,128 +2,91 @@ import io
 from PIL import Image
 from rembg import remove
 import streamlit as st
-import streamlit.components.v1 as components
 
 # Configurazione della pagina
 st.set_page_config(
     page_title="Vinted Studio Photo Editor", page_icon="📸", layout="centered"
 )
 
-# --- 1. GOOGLE ANALYTICS ---
-GA_TRACKING_ID = "G-F84MYBLZSG"
-ga_js = f"""
-<script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
-<script>
-  window.dataLayer = window.dataLayer || '';
-  function gtag(){{dataLayer.push(arguments);}}
-  gtag('js', new Date());
-  gtag('config', '{GA_TRACKING_ID}');
-</script>
-"""
-components.html(ga_js, height=0)
-
-# --- 2. INTERFACCIA PRINCIPALE ---
+# --- INTERFACCIA PRINCIPALE ---
 st.title("📸 Vinted Studio Photo Editor")
 st.write(
     "Rimuovi lo sfondo e crea foto perfette per i tuoi annunci su Vinted in"
     " pochi secondi."
 )
 
-# Sidebar per le opzioni di personalizzazione dello sfondo
-with st.sidebar:
-  st.title("🎨 Personalizzazione")
-  st.write("Scegli lo sfondo per la foto del tuo capo.")
-
-  bg_choice = st.selectbox(
-      "Colore dello sfondo",
-      [
-          "Trasparente (PNG)",
-          "Bianco Puro",
-          "Grigio Neutro",
-          "Beige / Carta da zucchero",
-      ],
-  )
-
 uploaded_file = st.file_uploader(
     "Scegli un'immagine", type=["jpg", "jpeg", "png"]
 )
 
+# SEZIONE SCELTA SFONDO
+bg_choice = st.selectbox(
+    "Seleziona il colore dello sfondo:",
+    [
+        "Trasparente (PNG)",
+        "Bianco Puro",
+        "Grigio Neutro",
+        "Beige / Carta da zucchero",
+    ],
+)
+
 if uploaded_file is not None:
-  # Mostra l'immagine originale (usiamo width='stretch' per evitare i vecchi warning)
+  # Mostra l'immagine originale
   image = Image.open(uploaded_file)
-  st.image(image, caption="Foto Originale", width="stretch")
+  st.image(image, caption="Foto Originale")
 
-  with st.spinner("Elaborazione e rimozione sfondo in corso..."):
-    # Rimozione dello sfondo con rembg
-    input_image = image.convert("RGBA")
-    output_image = remove(input_image)
+  if st.button("Rimuovi Sfondo"):
+    with st.spinner("Elaborazione in corso..."):
+      # Rimozione dello sfondo
+      input_image = image.convert("RGBA")
+      output_image = remove(input_image)
 
-    # Gestione dei vari sfondi selezionabili
-    if bg_choice == "Bianco Puro":
-      background = Image.new("RGBA", output_image.size, (255, 255, 255, 255))
-      background.paste(output_image, (0, 0), output_image)
-      final_image = background.convert("RGB")
-      file_format = "JPEG"
-      file_extension = "jpg"
-      mime_type = "image/jpeg"
-    elif bg_choice == "Grigio Neutro":
-      background = Image.new("RGBA", output_image.size, (240, 240, 240, 255))
-      background.paste(output_image, (0, 0), output_image)
-      final_image = background.convert("RGB")
-      file_format = "JPEG"
-      file_extension = "jpg"
-      mime_type = "image/jpeg"
-    elif bg_choice == "Beige / Carta da zucchero":
-      background = Image.new("RGBA", output_image.size, (245, 242, 238, 255))
-      background.paste(output_image, (0, 0), output_image)
-      final_image = background.convert("RGB")
-      file_format = "JPEG"
-      file_extension = "jpg"
-      mime_type = "image/jpeg"
-    else:  # Trasparente
-      final_image = output_image
-      file_format = "PNG"
-      file_extension = "png"
-      mime_type = "image/png"
+      # Gestione dei vari sfondi
+      if bg_choice == "Bianco Puro":
+        background = Image.new("RGBA", output_image.size, (255, 255, 255, 255))
+        background.paste(output_image, (0, 0), output_image)
+        final_image = background.convert("RGB")
+        file_format, file_extension, mime_type = "JPEG", "jpg", "image/jpeg"
+      elif bg_choice == "Grigio Neutro":
+        background = Image.new("RGBA", output_image.size, (240, 240, 240, 255))
+        background.paste(output_image, (0, 0), output_image)
+        final_image = background.convert("RGB")
+        file_format, file_extension, mime_type = "JPEG", "jpg", "image/jpeg"
+      elif bg_choice == "Beige / Carta da zucchero":
+        background = Image.new("RGBA", output_image.size, (245, 242, 238, 255))
+        background.paste(output_image, (0, 0), output_image)
+        final_image = background.convert("RGB")
+        file_format, file_extension, mime_type = "JPEG", "jpg", "image/jpeg"
+      else:  # Trasparente
+        final_image = output_image
+        file_format, file_extension, mime_type = "PNG", "png", "image/png"
 
-    # Mostra il risultato finale
-    st.image(
-        final_image,
-        caption=f"Foto elaborata ({bg_choice})",
-        width="stretch",
-    )
+      # Mostra il risultato
+      st.image(final_image, caption=f"Foto elaborata ({bg_choice})")
 
-    # Pulsante di Download
-    buf = io.BytesIO()
-    final_image.save(buf, format=file_format)
-    byte_im = buf.getvalue()
+      # Pulsante di Download
+      buf = io.BytesIO()
+      final_image.save(buf, format=file_format)
+      st.download_button(
+          label=f"⬇️ Scarica foto ({file_extension.upper()})",
+          data=buf.getvalue(),
+          file_name=f"vinted_studio.{file_extension}",
+          mime=mime_type,
+      )
 
-    st.download_button(
-        label=f"⬇️ Scarica foto ({file_extension.upper()})",
-        data=byte_im,
-        file_name=f"vinted_studio.{file_extension}",
-        mime=mime_type,
-        width="stretch",
-    )
+# --- SEZIONE SUPPORTO ---
+st.markdown("---")
+st.subheader("☕ Ti è stato utile questo strumento?")
+st.write(
+    "Puoi offrire un caffè per sostenere i costi o contattarmi per"
+    " bug/suggerimenti!"
+)
 
-  # --- 3. SEZIONE SUPPORTO E CONTATTO (In evidenza) ---
-  st.markdown("---")
-  st.subheader("☕ Ti è stato utile questo strumento?")
-  st.write(
-      "Se l'app ti aiuta a velocizzare le vendite su Vinted, puoi offrire un"
-      " caffè per sostenere i costi del server o contattarmi per suggerimenti!"
-  )
-
-  # Pulsante Donazione PayPal
+col1, col2 = st.columns(2)
+with col1:
   st.link_button(
       "☕ Offrimi un caffè (PayPal)",
       "https://www.paypal.me/ContoAziendalePaypal",
-      width="stretch",
   )
-
-  # Pulsante di Contatto (Modifica l'email o metti il tuo link Telegram)
-  st.link_button(
-      "✉️ Contattami / Segnala un bug",
-      "mailto:tuaemail@example.com",
-      width="stretch",
-  )
+with col2:
+  st.link_button("✉️ Contattami", "mailto:tuaemail@example.com")
