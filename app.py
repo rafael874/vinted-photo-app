@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Configurazione della pagina (deve essere sempre la prima istruzione Streamlit)
+# Configurazione della pagina
 st.set_page_config(
     page_title="Vinted Studio Photo Editor",
     page_icon="📸",
@@ -21,30 +21,13 @@ ga_js = f"""
   gtag('config', '{GA_TRACKING_ID}');
 </script>
 """
-
-# Iniettiamo il codice di tracciamento (altezza 0 così non è visibile nella pagina)
 components.html(ga_js, height=0)
 
 
-# --- 2. BARRA LATERALE (SIDEBAR) ---
+# --- 2. BARRA LATERALE (Solo per opzioni tecniche se servono) ---
 with st.sidebar:
-  st.title("⚙️ Opzioni")
-  st.write("Gestisci le foto dei tuoi capi per Vinted.")
-
-  st.markdown("---")
-
-  # Sezione Donazione / Supporto con il tuo link PayPal corretto
-  st.subheader("☕ Supporta il progetto")
-  st.write(
-      "Se questa app ti aiuta a vendere più velocemente su Vinted, offrimi un"
-      " caffè per sostenere i costi del server!"
-  )
-
-  st.link_button(
-      "☕ Offrimi un caffè",
-      "https://www.paypal.me/ContoAziendalePaypal",
-      use_container_width=True,
-  )
+  st.title("⚙️ Info")
+  st.write("App creata per velocizzare le vendite su Vinted.")
 
 
 # --- 3. CORPO PRINCIPALE DELL'APP ---
@@ -54,11 +37,33 @@ st.write(
     " sfondo."
 )
 
-# Esempio di upload file (puoi collegarlo alla tua logica con rembg / Pillow)
+# Esempio di upload file
 uploaded_file = st.file_uploader(
     "Scegli un'immagine (JPG o PNG)", type=["jpg", "jpeg", "png"]
 )
 
 if uploaded_file is not None:
   st.success("Immagine caricata correttamente!")
-  # Qui inserisci il resto della tua logica per elaborare l'immagine con rembg
+
+  # --- QUI VA LA TUA LOGICA DI ELABORAZIONE (rembg / Pillow) ---
+  # E finta per l'esempio, ma qui sotto mostreresti l'immagine pronta
+
+  st.info(
+      "✨ La tua foto è pronta! (Inserisci qui sotto il tuo blocco di"
+      " download)"
+  )
+
+  # --- SEZIONE DONAZIONE IN EVIDENZA NEL CORPO PRINCIPALE ---
+  st.markdown("---")
+  st.subheader("☕ Ti è stato utile questo strumento?")
+  st.write(
+      "Se l'app ti ha fatto risparmiare tempo e ti aiuta a vendere su Vinted,"
+      " considera l'idea di offrire un caffè per sostenere i costi di"
+      " gestione!"
+  )
+
+  st.link_button(
+      "☕ Offrimi un caffè (PayPal)",
+      "https://www.paypal.me/ContoAziendalePaypal",
+      use_container_width=True,
+  )
