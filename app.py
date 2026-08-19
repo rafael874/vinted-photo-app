@@ -6,6 +6,22 @@ from rembg import remove, new_session
 # Configurazione della pagina ottimizzata per dispositivi mobili
 st.set_page_config(page_title="Studio Foto Vinted", page_icon="📸", layout="centered")
 
+# Integrazione Google Analytics
+def inject_ga():
+    GA_ID = "G-F84MYBLZSG"
+    ga_js = f"""
+    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){{dataLayer.push(arguments);}}
+        gtag('js', new Date());
+        gtag('config', '{GA_ID}');
+    </script>
+    """
+    st.components.v1.html(ga_js, height=0)
+
+inject_ga()
+
 st.title("📸 Studio Foto per Vinted")
 st.markdown("Rendi i tuoi capi professionali in un click. Carica le tue foto qui sotto.")
 
