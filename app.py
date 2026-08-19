@@ -5,7 +5,7 @@ from rembg import remove, new_session
 
 st.set_page_config(page_title="Studio Foto Vinted", page_icon="📸", layout="centered")
 
-st.title("📸 Studio Foto per Vinted (Multi-foto)")
+st.title("📸 Studio Foto per Vinted")
 
 bg_options = ["Bianco Professionale", "Grigio Neutro", "Nero Naturale"]
 
@@ -36,7 +36,6 @@ def create_natural_background(size, style):
         
     return bg
 
-# 💡 Modificato per accettare più file (massimo 5)
 uploaded_files = st.file_uploader("1. Carica foto (massimo 5 alla volta)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
 if uploaded_files:
@@ -44,14 +43,12 @@ if uploaded_files:
         st.warning("⚠️ Hai caricato più di 5 foto. Verranno elaborate solo le prime 5.")
         uploaded_files = uploaded_files[:5]
         
-    st.info(f"Hai caricato {len(uploaded_files)} foto.")
     bg_style = st.selectbox("2. Scegli lo sfondo per tutte le foto:", bg_options)
     
     if st.button("✨ Elabora Tutte le Foto", type="primary", use_container_width=True):
         with st.spinner("Elaborazione in corso..."):
             session = load_stable_model()
             
-            # Ciclo per elaborare ogni singola foto caricata
             for i, uploaded_file in enumerate(uploaded_files):
                 image = Image.open(uploaded_file)
                 image.thumbnail((1500, 1500))
@@ -69,9 +66,8 @@ if uploaded_files:
                 buffered = io.BytesIO()
                 background.save(buffered, format="JPEG", quality=98)
                 
-                # Mostra il risultato per ciascuna foto con il rispettivo pulsante di download
-                st.markdown(f"--- foto {i+1} ---")
-                st.image(background, caption=f"Risultato {i+1}", use_container_width=True)
+                st.markdown(f"--- Foto {i+1} ---")
+                st.image(background, caption=f"Risultato Foto {i+1}", use_container_width=True)
                 st.download_button(
                     f"📥 Scarica Foto {i+1}", 
                     buffered.getvalue(), 
@@ -80,7 +76,3 @@ if uploaded_files:
                     key=f"download_{i}",
                     use_container_width=True
                 )
-            background.save(buffered, format="JPEG", quality=98) # Qualità al 98% per zero sgranature
-            
-            st.image(background, caption="Risultato Nitido", use_container_width=True)
-            st.download_button("📥 Scarica Foto", buffered.getvalue(), "foto_vinted.jpg", "image/jpeg", use_container_width=True)
