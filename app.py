@@ -5,7 +5,7 @@ from rembg import remove, new_session
 
 st.set_page_config(page_title="Studio Foto Vinted", page_icon="📸", layout="centered")
 
-st.title("📸 Studio Foto per Vinted")
+st.title("📸 Studio Foto per Vinted (Multi-foto)")
 
 bg_options = ["Bianco Professionale", "Grigio Neutro", "Nero Naturale"]
 
@@ -36,31 +36,50 @@ def create_natural_background(size, style):
         
     return bg
 
-uploaded_file = st.file_uploader("1. Carica foto", type=["jpg", "jpeg", "png"])
+# 💡 Modificato per accettare più file (massimo 5)
+uploaded_files = st.file_uploader("1. Carica foto (massimo 5 alla volta)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Foto Originale", use_container_width=True)
+if uploaded_files:
+    if len(uploaded_files) > 5:
+        st.warning("⚠️ Hai caricato più di 5 foto. Verranno elaborate solo le prime 5.")
+        uploaded_files = uploaded_files[:5]
+        
+    st.info(f"Hai caricato {len(uploaded_files)} foto.")
+    bg_style = st.selectbox("2. Scegli lo sfondo per tutte le foto:", bg_options)
     
-    bg_style = st.selectbox("2. Scegli lo sfondo:", bg_options)
-    
-    if st.button("✨ Elabora Foto", type="primary", use_container_width=True):
+    if st.button("✨ Elabora Tutte le Foto", type="primary", use_container_width=True):
         with st.spinner("Elaborazione in corso..."):
-            image.thumbnail((1500, 1500))
             session = load_stable_model()
-            output_image = remove(image, session=session)
             
-            background = create_natural_background((1200, 1200), bg_style)
-            
-            # 💡 USIAMO BICUBIC: Mantiene i dettagli della stoffa e i bordi molto più definiti e nitidi
-            output_image.thumbnail((950, 950), Image.Resampling.BICUBIC)
-            
-            paste_x = (1200 - output_image.width) // 2
-            paste_y = (1200 - output_image.height) // 2
-            
-            background.paste(output_image, (paste_x, paste_y), output_image)
-            
-            buffered = io.BytesIO()
+            # Ciclo per elaborare ogni singola foto caricata
+            for i, uploaded_file in enumerate(uploaded_files):
+                image = Image.open(uploaded_file)
+                image.thumbnail((1500, 1500))
+                
+                output_image = remove(image, session=session)
+                
+                background = create_natural_background((1200, 1200), bg_style)
+                output_image.thumbnail((950, 950), Image.Resampling.BICUBIC)
+                
+                paste_x = (1200 - output_image.width) // 2
+                paste_y = (1200 - output_image.height) // 2
+                
+                background.paste(output_image, (paste_x, paste_y), output_image)
+                
+                buffered = io.BytesIO()
+                background.save(buffered, format="JPEG", quality=98)
+                
+                # Mostra il risultato per ciascuna foto con il rispettivo pulsante di download
+                st.markdown(f"--- foto {i+1} ---")
+                st.image(background, caption=f"Risultato {i+1}", use_container_width=True)
+                st.download_button(
+                    f"📥 Scarica Foto {i+1}", 
+                    buffered.getvalue(), 
+                    f"vinted_foto_{i+1}.jpg", 
+                    "image/jpeg", 
+                    key=f"download_{i}",
+                    use_container_width=True
+                )
             background.save(buffered, format="JPEG", quality=98) # Qualità al 98% per zero sgranature
             
             st.image(background, caption="Risultato Nitido", use_container_width=True)
